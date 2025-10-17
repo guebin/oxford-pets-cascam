@@ -1,171 +1,77 @@
 # Oxford-IIIT Pets Dataset for CasCAM
 
-This repository contains the Oxford-IIIT Pet dataset prepared for CasCAM (Cascaded Class Activation Mapping) experiments.
+Oxford-IIIT Pets for CasCAM provides three synchronized views of every image pair used in our artifact-robustness experiments:
 
-## Dataset Overview
+- `original/` — the clean Oxford-IIIT Pet images (7,390 files)
+- `with_artifact/` — the same images with synthetic occlusion/noise artifacts applied
+- `artifact_boxes/` — rectangular binary masks that highlight the artifact footprint for each perturbed image
+- `annotations/` — the original trimaps, VOC-style XMLs, and split files distributed with Oxford-IIIT Pets
 
-- **Total size**: 644 MB
-- **Total images**: 14,780 (7,390 × 2 versions)
-- **Annotations**: 11,080 files
-- **Classes**: 37 pet breeds (25 dogs, 12 cats)
+The repository is ready to drop into the CasCAM codebase or any project that needs aligned clean, perturbed, and artifact-region supervision.
 
-## Directory Structure
-
+## Directory layout
 ```
 oxford-pets-cascam/
-├── annotations/          # 45 MB - Segmentation annotations
-│   ├── trimaps/         # Trimap segmentation masks
-│   └── xmls/            # Bounding box annotations (PASCAL VOC format)
-├── original/            # 299 MB - Original clean images
-│   └── *.jpg            # 7,390 images
-└── with_artifact/       # 301 MB - Images with synthetic artifacts
-    └── *.jpg            # 7,390 images
+├── annotations/
+│   ├── trimaps/               # foreground/boundary/background trimap PNGs
+│   ├── xmls/                  # VOC-style bounding boxes from the original dataset
+│   ├── list.txt               # full image listing with class ids
+│   ├── trainval.txt           # official train/val split
+│   └── test.txt               # official test split
+├── artifact_boxes/
+│   ├── *.png                  # 512×512 binary masks (0 background / 255 artifact box)
+│   └── artifact_metadata.csv  # per-image thresholds and bounding boxes
+├── original/
+│   └── *.jpg                  # clean images
+└── with_artifact/
+    └── *.jpg                  # images with injected artifacts
 ```
 
-## Data Attribution
+## Artifact bounding boxes
+The synthetic artifacts were detected by contrasting `original/` and `with_artifact/` images with an adaptive per-image threshold. Each mask in `artifact_boxes/` contains the tight bounding rectangle that encloses the detected artifact region; pixel values are either 0 or 255 to keep the files compact and easy to visualize.
 
-### Original Dataset
-- **Name**: Oxford-IIIT Pet Dataset
-- **Source**: [Visual Geometry Group, University of Oxford](https://www.robots.ox.ac.uk/~vgg/data/pets/)
-- **Authors**: O. M. Parkhi, A. Vedaldi, A. Zisserman, C. V. Jawahar
-- **Citation**:
-  ```bibtex
-  @inproceedings{parkhi12a,
-    title={Cats and Dogs},
-    author={Parkhi, O. M. and Vedaldi, A. and Zisserman, A. and Jawahar, C. V.},
-    booktitle={IEEE Conference on Computer Vision and Pattern Recognition},
-    year={2012}
-  }
-  ```
+`artifact_metadata.csv` summarises the detection outcome for every image. Columns:
 
-### Annotations
-All annotations are from the original Oxford-IIIT Pet Dataset:
+| column | description |
+| ------ | ----------- |
+| `image` | filename shared by `original/` and `with_artifact/` |
+| `threshold` | normalized difference threshold chosen for the image |
+| `artifact_pixels` | number of pixels inside the rectangular mask |
+| `artifact_ratio` | artifact_pixels divided by the total image area |
+| `bbox_xmin`, `bbox_ymin`, `bbox_xmax`, `bbox_ymax` | bounding rectangle coordinates (0-indexed) |
 
-- **Trimap segmentation masks** (`annotations/trimaps/`)
-  - Source: Oxford-IIIT Pet Dataset annotations
-  - Format: PNG images
-  - Pixel values: 1=Foreground (pet), 2=Background, 3=Not classified
-  - Authors: O. M. Parkhi, A. Vedaldi, A. Zisserman, C. V. Jawahar
+You can treat these masks as weak supervision for bounding-box based training, or expand the rectangle to a soft mask if needed.
 
-- **Bounding box annotations** (`annotations/xmls/`)
-  - Source: Oxford-IIIT Pet Dataset annotations
-  - Format: PASCAL VOC XML format
-  - Contains: Head ROI (Region of Interest) bounding boxes
-
-- **Dataset splits** (`annotations/*.txt`)
-  - `list.txt`: Complete list of all images with class IDs
-  - `trainval.txt`: Training/validation split
-  - `test.txt`: Test split
-
-For more details, see `annotations/README` (original file from Oxford-IIIT Pet Dataset).
-
-### License and Terms of Use
-- **Original dataset**: Made available for research purposes only
-- **Images**: Use must respect the terms of use of original websites (see [Parkhi et al. 2012])
-- **Annotations**: From Oxford-IIIT Pet Dataset, provided by Visual Geometry Group
-- **Modifications**: Synthetic artifacts added for CasCAM research
-
-**Important**: This dataset is for research purposes only. Commercial use requires checking the original license terms.
-
-For detailed licensing information, refer to:
-- [Oxford-IIIT Pet Dataset website](https://www.robots.ox.ac.uk/~vgg/data/pets/)
-- `annotations/README` file in this repository
-- Original paper: Parkhi et al., "Cats and Dogs", CVPR 2012
-
-## Modifications for CasCAM
-
-### Original Images
-The `original/` directory contains unmodified images from the Oxford-IIIT Pet Dataset, resized and preprocessed for CasCAM experiments.
-
-### Images with Artifacts
-The `with_artifact/` directory contains images with synthetically added visual artifacts (noise, occlusions, etc.) for evaluating the robustness of Class Activation Mapping methods.
-
-**Artifact types**:
-- Random noise patterns
-- Geometric occlusions
-- Color perturbations
-- Other visual distractors
-
-These modifications were created specifically for CasCAM research to test the method's ability to focus on relevant object features while ignoring irrelevant artifacts.
-
-## Usage
-
-### Clone this repository
+## Using the dataset with CasCAM
 ```bash
-git clone https://github.com/guebin/oxford-pets-cascam.git
-```
-
-### Use with CasCAM
-This dataset is designed to work with the [CasCAM repository](https://github.com/guebin/CasCAM):
-
-```bash
-# Clone CasCAM repository
+# Clone the CasCAM codebase
 git clone https://github.com/guebin/CasCAM.git
 cd CasCAM
 
-# Clone data repository into CasCAM's data folder
+# Place this repository in the expected data location
 git clone https://github.com/guebin/oxford-pets-cascam.git data
 
-# Run experiments with artifact images
+# Example: train with artifact-augmented images
 python run.py --data_path ./data/with_artifact/
 
-# Or use original images
-python run.py --data_path ./data/original/
+# Example: evaluate with artifact bounding boxes
+python tools/eval.py \
+  --original ./data/original/ \
+  --perturbed ./data/with_artifact/ \
+  --artifact-masks ./data/artifact_boxes/
 ```
 
-## Dataset Statistics
+To regenerate the rectangular masks after updating the artifact pipeline, run the `run251018-extract_artifacts.py` script from the 2025-HY-CasCAM repository with `--mask-shape bbox` and point it at the `original` and `with_artifact` folders.
 
-| Category | Count |
-|----------|-------|
-| Total breeds | 37 |
-| Dog breeds | 25 |
-| Cat breeds | 12 |
-| Images per category (avg) | ~200 |
-| Image format | JPEG |
-| Average image size | ~40 KB |
+## Dataset statistics
+- 37 total breeds (12 cats, 25 dogs)
+- ~200 images per breed, JPEG format
+- Image resolution is 512×512 after preprocessing
+- Artifact masks occupy 1–15 % of the image area depending on the injected pattern
 
-## Annotation Format
+## Attribution and licence
+- **Original dataset**: [Oxford-IIIT Pet Dataset](https://www.robots.ox.ac.uk/~vgg/data/pets/) by O. M. Parkhi, A. Vedaldi, A. Zisserman, and C. V. Jawahar
+- **Original annotations**: Trimaps, VOC XMLs, and splits copied verbatim from the official release
+- **CasCAM modifications**: synthetic artifacts and bounding-box masks created for interpretability research
 
-### Trimaps
-- Format: PNG images
-- Values:
-  - 1: Foreground (pet)
-  - 2: Boundary
-  - 3: Background
-
-### XML Annotations
-- Format: PASCAL VOC XML
-- Contains:
-  - Bounding box coordinates (xmin, ymin, xmax, ymax)
-  - Class labels
-  - Image dimensions
-
-## Related Research
-
-This dataset is used in the following research:
-
-```bibtex
-@misc{cascam2025,
-  title={CasCAM: Cascaded Class Activation Mapping for Enhanced Model Interpretability},
-  author={Seoyeon Choi and Hayoung Kim and Guebin Choi},
-  year={2025},
-  note={Research implementation},
-  institution={Jeonbuk National University, KT Corporation}
-}
-```
-
-## Contact
-
-### For CasCAM-related questions
-- Open an issue in the [CasCAM repository](https://github.com/guebin/CasCAM)
-
-### For original dataset questions
-- **Original Oxford-IIIT Pet Dataset**: Contact Omkar Parkhi (omkar@robots.ox.ac.uk)
-- **Dataset website**: https://www.robots.ox.ac.uk/~vgg/data/pets/
-
-## Acknowledgments
-
-We thank:
-- **Visual Geometry Group, University of Oxford** for creating and sharing the Oxford-IIIT Pet Dataset
-- **O. M. Parkhi, A. Vedaldi, A. Zisserman, and C. V. Jawahar** for their original work on the Cats and Dogs dataset
-- The original image sources and photographers whose work comprises this dataset
+This repository is provided for research purposes only. Check the Oxford-IIIT Pet terms of use before deploying the images or derivatives in commercial products.
