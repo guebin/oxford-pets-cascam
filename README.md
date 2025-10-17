@@ -39,12 +39,38 @@ oxford-pets-cascam/
   ```
 
 ### Annotations
-- **Segmentation masks (trimaps)**: From Oxford-IIIT Pet Dataset
-- **Bounding boxes (XML)**: Generated from trimap annotations
-- **Format**: PASCAL VOC XML format
+All annotations are from the original Oxford-IIIT Pet Dataset:
 
-### License
-This dataset follows the original Oxford-IIIT Pet Dataset license terms. Please refer to the [original dataset website](https://www.robots.ox.ac.uk/~vgg/data/pets/) for licensing information.
+- **Trimap segmentation masks** (`annotations/trimaps/`)
+  - Source: Oxford-IIIT Pet Dataset annotations
+  - Format: PNG images
+  - Pixel values: 1=Foreground (pet), 2=Background, 3=Not classified
+  - Authors: O. M. Parkhi, A. Vedaldi, A. Zisserman, C. V. Jawahar
+
+- **Bounding box annotations** (`annotations/xmls/`)
+  - Source: Oxford-IIIT Pet Dataset annotations
+  - Format: PASCAL VOC XML format
+  - Contains: Head ROI (Region of Interest) bounding boxes
+
+- **Dataset splits** (`annotations/*.txt`)
+  - `list.txt`: Complete list of all images with class IDs
+  - `trainval.txt`: Training/validation split
+  - `test.txt`: Test split
+
+For more details, see `annotations/README` (original file from Oxford-IIIT Pet Dataset).
+
+### License and Terms of Use
+- **Original dataset**: Made available for research purposes only
+- **Images**: Use must respect the terms of use of original websites (see [Parkhi et al. 2012])
+- **Annotations**: From Oxford-IIIT Pet Dataset, provided by Visual Geometry Group
+- **Modifications**: Synthetic artifacts added for CasCAM research
+
+**Important**: This dataset is for research purposes only. Commercial use requires checking the original license terms.
+
+For detailed licensing information, refer to:
+- [Oxford-IIIT Pet Dataset website](https://www.robots.ox.ac.uk/~vgg/data/pets/)
+- `annotations/README` file in this repository
+- Original paper: Parkhi et al., "Cats and Dogs", CVPR 2012
 
 ## Modifications for CasCAM
 
@@ -66,22 +92,25 @@ These modifications were created specifically for CasCAM research to test the me
 
 ### Clone this repository
 ```bash
-git clone https://github.com/your-username/oxford-pets-cascam.git
+git clone https://github.com/guebin/oxford-pets-cascam.git
 ```
 
 ### Use with CasCAM
-This dataset is designed to work with the [CasCAM repository](https://github.com/your-username/CasCAM):
+This dataset is designed to work with the [CasCAM repository](https://github.com/guebin/CasCAM):
 
 ```bash
 # Clone CasCAM repository
-git clone https://github.com/your-username/CasCAM.git
+git clone https://github.com/guebin/CasCAM.git
 cd CasCAM
 
-# Clone data repository
-git clone https://github.com/your-username/oxford-pets-cascam.git data
+# Clone data repository into CasCAM's data folder
+git clone https://github.com/guebin/oxford-pets-cascam.git data
 
-# Run experiments
+# Run experiments with artifact images
 python run.py --data_path ./data/with_artifact/
+
+# Or use original images
+python run.py --data_path ./data/original/
 ```
 
 ## Dataset Statistics
@@ -127,8 +156,16 @@ This dataset is used in the following research:
 
 ## Contact
 
-For questions about this dataset preparation or CasCAM experiments, please open an issue in the [CasCAM repository](https://github.com/your-username/CasCAM).
+### For CasCAM-related questions
+- Open an issue in the [CasCAM repository](https://github.com/guebin/CasCAM)
+
+### For original dataset questions
+- **Original Oxford-IIIT Pet Dataset**: Contact Omkar Parkhi (omkar@robots.ox.ac.uk)
+- **Dataset website**: https://www.robots.ox.ac.uk/~vgg/data/pets/
 
 ## Acknowledgments
 
-We thank the Visual Geometry Group at the University of Oxford for creating and sharing the Oxford-IIIT Pet Dataset.
+We thank:
+- **Visual Geometry Group, University of Oxford** for creating and sharing the Oxford-IIIT Pet Dataset
+- **O. M. Parkhi, A. Vedaldi, A. Zisserman, and C. V. Jawahar** for their original work on the Cats and Dogs dataset
+- The original image sources and photographers whose work comprises this dataset
