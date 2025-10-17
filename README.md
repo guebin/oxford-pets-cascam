@@ -2,10 +2,10 @@
 
 Oxford-IIIT Pets for CasCAM provides three synchronized views of every image pair used in our artifact-robustness experiments:
 
-- `original/` — the clean Oxford-IIIT Pet images (7,390 files)
-- `with_artifact/` — the same images with synthetic occlusion/noise artifacts applied
+- `original/` — clean Oxford-IIIT Pet images resized to 512×512 (7,390 files)
+- `with_artifact/` — the same resized images with synthetic occlusion/noise artifacts applied
 - `artifact_boxes/` — rectangular binary masks that highlight the artifact footprint for each perturbed image
-- `annotations/` — the original trimaps, VOC-style XMLs, and split files distributed with Oxford-IIIT Pets
+- `annotations/` — resized trimaps (512×512), VOC-style XMLs, and split files derived from Oxford-IIIT Pets
 
 The repository is ready to drop into the CasCAM codebase or any project that needs aligned clean, perturbed, and artifact-region supervision.
 
@@ -13,7 +13,7 @@ The repository is ready to drop into the CasCAM codebase or any project that nee
 ```
 oxford-pets-cascam/
 ├── annotations/
-│   ├── trimaps/               # foreground/boundary/background trimap PNGs
+│   ├── trimaps/               # 512×512 resized trimap PNGs (foreground/boundary/background)
 │   ├── xmls/                  # VOC-style bounding boxes from the original dataset
 │   ├── list.txt               # full image listing with class ids
 │   ├── trainval.txt           # official train/val split
@@ -22,9 +22,9 @@ oxford-pets-cascam/
 │   ├── *.png                  # 512×512 binary masks (0 background / 255 artifact box)
 │   └── artifact_metadata.csv  # per-image thresholds and bounding boxes
 ├── original/
-│   └── *.jpg                  # clean images
+│   └── *.jpg                  # 512×512 resized clean images
 └── with_artifact/
-    └── *.jpg                  # images with injected artifacts
+    └── *.jpg                  # 512×512 resized images with injected artifacts
 ```
 
 ## Artifact bounding boxes
@@ -51,14 +51,25 @@ cd CasCAM
 # Place this repository in the expected data location
 git clone https://github.com/guebin/oxford-pets-cascam.git data
 
-# Example: train with artifact-augmented images
+# Basic usage: train with artifact-augmented images
 python run.py --data_path ./data/with_artifact/
 
-# Example: evaluate with artifact bounding boxes
-python tools/eval.py \
-  --original ./data/original/ \
-  --perturbed ./data/with_artifact/ \
-  --artifact-masks ./data/artifact_boxes/
+# Full evaluation with all advanced metrics
+python run.py \
+  --data_path ./data/with_artifact/ \
+  --annotation_dir ./data/annotations \
+  --artifact_masks_dir ./data/artifact_boxes/
+
+# Run only basic IoU evaluation (faster)
+python run.py \
+  --data_path ./data/with_artifact/ \
+  --annotation_dir ./data/annotations \
+  --eval_only_basic
+
+# Skip evaluation entirely (training + CAM generation only)
+python run.py \
+  --data_path ./data/with_artifact/ \
+  --no_iou
 ```
 
 To regenerate the rectangular masks after updating the artifact pipeline, run the `run251018-extract_artifacts.py` script from the 2025-HY-CasCAM repository with `--mask-shape bbox` and point it at the `original` and `with_artifact` folders.
@@ -66,12 +77,12 @@ To regenerate the rectangular masks after updating the artifact pipeline, run th
 ## Dataset statistics
 - 37 total breeds (12 cats, 25 dogs)
 - ~200 images per breed, JPEG format
-- Image resolution is 512×512 after preprocessing
+- All images and trimaps resized to 512×512
 - Artifact masks occupy 1–15 % of the image area depending on the injected pattern
 
 ## Attribution and licence
 - **Original dataset**: [Oxford-IIIT Pet Dataset](https://www.robots.ox.ac.uk/~vgg/data/pets/) by O. M. Parkhi, A. Vedaldi, A. Zisserman, and C. V. Jawahar
-- **Original annotations**: Trimaps, VOC XMLs, and splits copied verbatim from the official release
-- **CasCAM modifications**: synthetic artifacts and bounding-box masks created for interpretability research
+- **Original annotations**: Trimaps, VOC XMLs, and splits from the official release
+- **CasCAM modifications**: All images and trimaps resized to 512×512; synthetic artifacts and bounding-box masks created for interpretability research
 
 This repository is provided for research purposes only. Check the Oxford-IIIT Pet terms of use before deploying the images or derivatives in commercial products.
